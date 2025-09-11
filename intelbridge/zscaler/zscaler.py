@@ -9,7 +9,7 @@ import sys
 import time
 import json
 import math
-from auth.auth import zs_auth
+from auth.auth import zs_auth, zs_logout
 from util.util import increment, log_http_error, listSplit, write_data, write_rejected
 
 
@@ -169,7 +169,7 @@ def look_up_indicators(indicators, token):
             if response.status_code == 400:
                 logging.info(f"[Zscaler API] 400 Bad Request: One or more indicators in this chunk are incompatible with the URL look-up API. Skipping this chunk.")
                 progress = increment(progress, len(chunk))
-                time.sleep(1)
+                time.sleep(60)
                 break
             try:
                 response.raise_for_status()
@@ -187,7 +187,7 @@ def look_up_indicators(indicators, token):
             amount_rejected = amount_rejected + rejected
             ingestable['urls'] += modeled_chunk['urls']
             progress = increment(progress, len(chunk))
-            time.sleep(1)
+            time.sleep(60)
     print(f"{'='*29}DONE{'='*29}")
     return ingestable, amount_rejected
 
@@ -303,4 +303,10 @@ def save_changes(token):
         raise
     activate = activate_response.json()
     logging.info(f"[Zscaler API] Changes activated: {json.dumps(activate)}")
+    
+    try:
+        zs_logout(token)
+    except Exception as err:
+        logging.warning(f"[Zscaler API] Session cleanup failed: {err}")
+    
     return activate

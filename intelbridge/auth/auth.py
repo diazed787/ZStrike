@@ -82,3 +82,23 @@ def zs_auth():
     token = response.cookies['JSESSIONID']
     return token
 
+def zs_logout(token):
+    """Deletes the authenticated session to cleanup resources
+    token: Zscaler API Auth token
+    returns: HTTP response status
+    """
+    logging.info(f"Logging out user {zs_username} from Zscaler API")
+    url = f"{zs_hostname}/api/v1/authenticatedSession"
+    headers = {'Content-Type': 'application/json',
+               'cache-control': "no-cache",
+               'cookie': "JSESSIONID=" + str(token)}
+    response = requests.delete(url=url, headers=headers)
+    try:
+        response.raise_for_status()
+        logging.info("Successfully logged out from Zscaler API")
+    except requests.exceptions.HTTPError as err:
+        logging.info(f"Error logging out from Zscaler API: {err}")
+        log_http_error(response)
+        raise
+    return response.status_code
+
