@@ -1,0 +1,29 @@
+
+# CrowdStrike - Zscaler Intel Bridge Configuration File
+# Enter values prior to first launch
+
+# CrowdStrike configurations
+# Do not use quotation marks in these values!
+[CROWDSTRIKE]
+client=
+secret=
+base_url=https://api.crowdstrike.com
+type=url
+limit=10000
+
+# ZScaler configurations
+# Hostname only requires the base URL! (i.e. https://zsapi.zscalerthree.net)
+[ZSCALER]
+hostname=https://admin.zscaler.net
+username=
+password=
+token=
+
+#If running as a chron job, set this value to 1
+#When disable_loop=1, the script will exit after completing a cycle
+[CHRON]
+disable_loop=0
+
+#When log_indicators=1, indicators will be logged in logs/data_log as they are deleted and loaded.
+[LOG]
+log_indicators=0
