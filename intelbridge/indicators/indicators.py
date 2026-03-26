@@ -148,6 +148,10 @@ def get_all_indicators(falcon):
             # Display our running progress
             logging.info(f"Retrieved: {len(indicators_list)}, Remaining: {total}, Marker: {current_page}")
         else:
+            # Bypass the broken error loop to see the real message
+            print(f"CRITICAL: Falcon API Error Response: {returned}")
+            total = 0
+            break
             # Retrieve all errors returned from the API
             errors = returned["body"]["errors"]
             # Tell the loop to stop processing

@@ -9,7 +9,7 @@ import sys
 import time
 import json
 import math
-from auth.auth import zs_auth, zs_logout
+from auth.auth import zs_auth #, zs_logout
 from util.util import increment, log_http_error, listSplit, write_data, write_rejected
 
 
@@ -33,11 +33,11 @@ def validate_category(token):
     returns: Entity ID of Zscaler URL Category
     """
     logging.info(f"Confirming URL category {zs_url_category} exists")
-    url = f"{zs_hostname}/api/v1/urlCategories?customOnly=true"
+    url = f"{zs_hostname}/urlCategories?customOnly=true"
     headers = {'content-type': 'application/json',
                'cache-control': 'no-cache',
                'User-Agent' :'Zscaler-FalconX-Intel-Bridge-v2',
-               'cookie': "JSESSIONID=" + str(token)}
+               'Authorization': 'Bearer ' + str(token)}
     response = requests.get(url=url, headers=headers)
     try:
         response.raise_for_status()
@@ -53,22 +53,22 @@ def validate_category(token):
             if c['configuredName'] == zs_url_category:
                 logging.info(f"Validated URL category {zs_url_category}")
                 return {'id':c['id'], 'content':{'urls':c['urls'][1:], 'dbCategorizedUrls':c['dbCategorizedUrls']}}
-    id = create_catagory(token)
+    id = create_category(token)
     return id
 
-def create_catagory(token):
+def create_category(token):
     """Posts to Zscaler API to create a new URL category with the configured name
     token - Zscaler API Auth token
     returns: entity ID of new Zscaler URL Cateogry
     """
     logging.info(f"Creating URL category {zs_url_category}")
-    url = f"{zs_hostname}/api/v1/urlCategories"
+    url = f"{zs_hostname}/urlCategories"
     headers = {'content-type': "application/json",
                'cache-control': "no-cache",
                'User-Agent' :'Zscaler-FalconX-Intel-Bridge-v2',
-               'cookie': "JSESSIONID=" + str(token)}
+               'Authorization': 'Bearer ' + str(token)}
     payload = {
-            "id": 0,
+            "id": "ANY",
             "configuredName": zs_url_category,
             "customCategory": "true",
             "superCategory": "USER_DEFINED",
@@ -138,7 +138,7 @@ def look_up_indicators(indicators, token):
     url =  f"{zs_hostname}/api/v1/urlLookup"
     headers = {'content-type': "application/json",
                'cache-control': "no-cache",
-               'cookie': "JSESSIONID=" + str(token)}
+               'Authorization': 'Bearer ' + str(token)}
     chunks = split_indicators(indicators)
     amount_rejected = 0
     print(f"{'='*20}Zscaler API URL Lookup{'='*20}")
@@ -200,11 +200,11 @@ def push_indicators(token, category, indicators, deleted):
     returns: results of push
     """
     action = "ADD_TO_LIST" if not deleted else "REMOVE_FROM_LIST"
-    url = f"{zs_hostname}/api/v1/urlCategories/{category}?action={action}"
+    url = f"{zs_hostname}/urlCategories/{category}?action={action}"
     headers = {'content-type': "application/json",
                'cache-control': "no-cache",
                'User-Agent' :'Zscaler-FalconX-Intel-Bridge-v2',
-               'cookie': "JSESSIONID=" + str(token)}
+               'Authorization': 'Bearer ' + str(token)}
     progress = [0, 0, len(indicators), "Posting URLs in indicator chunk"]
     print(f"{'='*22 if deleted else '='*22}"
           f"{'Removing Old' if deleted else 'Posting New'}* URL's"
@@ -254,7 +254,7 @@ def put_chunks(indicators, url, headers, progress):
             if response.status_code == 401:
                 logging.info(f"[Zscaler API] 401 Token Expired: Renewing auth and retrying.")
                 token = zs_auth()
-                headers["cookie"] = "JSESSIONID=" + str(token)
+                headers["Authorization"] = 'Bearer ' + str(token)
                 continue
             try:
                 response.raise_for_status()
@@ -279,12 +279,12 @@ def save_changes(token):
     returns: HTTP results
     """
     logging.info(f"[Zscaler API] Activating changes")
-    status_url = f"{zs_hostname}/api/v1/status"
-    save_url = f"{zs_hostname}/api/v1/status/activate"
+    status_url = f"{zs_hostname}/status"
+    save_url = f"{zs_hostname}/status/activate"
     headers = {'content-type': "application/json",
                'cache-control': "no-cache",
                'User-Agent' :'Zscaler-FalconX-Intel-Bridge-v2',
-               'cookie': "JSESSIONID=" + str(token)}
+               'Authorization': 'Bearer ' + str(token)}
     status_response = requests.get(url=status_url, headers=headers)
     try:
         status_response.raise_for_status()
@@ -304,9 +304,9 @@ def save_changes(token):
     activate = activate_response.json()
     logging.info(f"[Zscaler API] Changes activated: {json.dumps(activate)}")
     
-    try:
-        zs_logout(token)
-    except Exception as err:
-        logging.warning(f"[Zscaler API] Session cleanup failed: {err}")
+#    try:
+#        zs_logout(token)
+#    except Exception as err:
+#        logging.warning(f"[Zscaler API] Session cleanup failed: {err}")
     
     return activate

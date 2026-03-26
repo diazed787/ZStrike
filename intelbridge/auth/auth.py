@@ -7,6 +7,7 @@ import configparser
 import requests
 import time
 import json
+import base64
 from util.util import log_http_error
 from falconpy import APIHarness
 
@@ -18,11 +19,9 @@ cs_client = str(cs_config['client'])
 cs_secret = str(cs_config['secret'])
 cs_base_url = str(cs_config['base_url'])
 zs_config = config['ZSCALER']
-zs_hostname = str(zs_config['hostname'])
-zs_username = str(zs_config['username'])
-zs_password = str(zs_config['password'])
-zs_api_key = str(zs_config['token'])
-
+zs_vanity = str(zs_config['auth_hostname'])
+zs_client_id = str(zs_config['client_id'])
+zs_client_secret = str(zs_config['client_secret'])
 
 def cs_auth():
     """Returns a new Falcon API Auth Token, hot off the press
@@ -46,59 +45,35 @@ def cs_auth():
 
     return falcon
 
-def obfuscateApiKey(now):
-    """Helper function for Zscaler's fancy auth method
-    now - current datetime
-    retuns: Zscaler API Auth key (for generating token)
-    """
-    seed = zs_api_key
-    n = str(now)[-6:]
-    r = str(int(n) >> 1).zfill(6)
-    key = ''
-    for i in range(0, len(str(n)), 1):
-        key += seed[int(str(n)[i])]
-    for j in range(0, len(str(r)), 1):
-        key += seed[int(str(r)[j])+2]
-    return key
 
 def zs_auth():
     """Generates a new Zscaler API Auth Token, hot off the press
     returns: Zscaler API Auth token
     """
-    logging.info(f"Authenticating user {zs_username} to Zscaler API")
-    now = int(time.time() * 1000)
-    url = f"{zs_hostname}/api/v1/authenticatedSession"
-    obfuscated_api_key = obfuscateApiKey(now)
-    payload = {"username": zs_username, "password": zs_password,
-               "apiKey": obfuscated_api_key, "timestamp": now}
-    headers = {'Content-Type': 'application/json','cache-control': "no-cache"}
-    response = requests.request("POST", url, headers=headers, data=json.dumps(payload))
+    logging.info(f"Authenticating to Zscaler API")
+#    now = int(time.time() * 1000)
+    url = f"{zs_vanity}/oauth2/v1/token"
+    auth_string = f"{zs_client_id}:{zs_client_secret}" # mash id and secret
+    auth_b64 = base64.b64encode(auth_string.encode()) # base64 encode
+    auth_string = auth_b64.decode()
+    payload = { "grant_type": "client_credentials",
+        "audience": "https://api.zscaler.com"
+             }
+    headers = {'Content-Type': 'application/x-www-form-urlencoded', 'Accept': '*/*',
+               'Authorization': 'Basic ' + auth_string
+               }
+ #   obfuscated_api_key = obfuscateApiKey(now)
+ #   payload = {"username": zs_username, "password": zs_password,
+ #              "apiKey": obfuscated_api_key, "timestamp": now}
+ #   headers = {'Content-Type': 'application/json','cache-control': "no-cache"}
+    response = requests.request("POST", url, headers=headers, data=payload)
     try:
         response.raise_for_status()
     except requests.exceptions.HTTPError as err:
         logging.info(f"Error authenticating to Zscaler API: {err}")
         log_http_error(response)
         raise
-    token = response.cookies['JSESSIONID']
+    js = response.json()
+    token = js["access_token"]
+#    token = response.cookies['JSESSIONID']
     return token
-
-def zs_logout(token):
-    """Deletes the authenticated session to cleanup resources
-    token: Zscaler API Auth token
-    returns: HTTP response status
-    """
-    logging.info(f"Logging out user {zs_username} from Zscaler API")
-    url = f"{zs_hostname}/api/v1/authenticatedSession"
-    headers = {'Content-Type': 'application/json',
-               'cache-control': "no-cache",
-               'cookie': "JSESSIONID=" + str(token)}
-    response = requests.delete(url=url, headers=headers)
-    try:
-        response.raise_for_status()
-        logging.info("Successfully logged out from Zscaler API")
-    except requests.exceptions.HTTPError as err:
-        logging.info(f"Error logging out from Zscaler API: {err}")
-        log_http_error(response)
-        raise
-    return response.status_code
-

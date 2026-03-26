@@ -47,7 +47,10 @@ class IntelBridge():
         deleted - Boolean for pulling new or deleted indicators
         returns: List containing indicators pulled from Falcon API
         """
+        print(f"DEBUG: Falcon Object: {falcon}")
+        print(f"DEBUG: Deleted Value: {deleted}")
         indicators = get_indicators(falcon, deleted)
+        print(f"DEBUG: Found {len(indicators) if indicators else 0} indicators")
         return indicators
 
     def prepare(self, token, indicators):
