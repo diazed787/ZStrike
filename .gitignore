@@ -5,5 +5,5 @@ logs/rejected_log/*.log
 .vscode/*
 .idea/*
 *__pycache__*
-*config.ini*
+config.ini
 /.venv/
