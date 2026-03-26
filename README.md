@@ -1,8 +1,8 @@
 # ZIA/Falcon Integration: The Intel Bridge
 
-This tool seemlessly integrates CrowdStrike's Falcon's Threat Intelligence with zscaler's Zero Trust Exchange to provide an extra layer of security and visibility for web access. CrowdStrike's Falcon Intel module includes access to  cutting edge database of Indicators of Compromise curated by intelligence experts. 
+This tool seamlessly integrates CrowdStrike's Falcon's Threat Intelligence with Zscaler's Zero Trust Exchange to provide an extra layer of security and visibility for web access. CrowdStrike's Falcon Intel module includes access to  cutting edge database of Indicators of Compromise curated by intelligence experts. 
 
-During runtime, the integration maintains a custom URL category in zscaler ZIA. Left to run indefinitely and unsupervised, it will automatically populate its URL Category with the newest Falcon Intel Indicators. This occurs in a 12 hour loop, and can be left running on a server for eternity or scheduled as a chron job.
+During runtime, the integration maintains a custom URL category in Zscaler Internet Access. Left to run indefinitely and unsupervised, it will automatically populate its URL Category with the newest Falcon Intel Indicators. This occurs in a 12 hour loop, and can be left running on a server for eternity or scheduled as a chron job.
 
 # Getting Started
 First, remove any CrowdStrike related URL Categories from your ZIA tenant from previous iterations of the integration. You only need to do this once, the script handles its creation and maintenence.
@@ -65,30 +65,3 @@ With Python 3.7+ installed:
 ```bash
 python3 intelbridge
 ```
-
-# Patch Notes
-
-Due to popular demand, we've removed the URL Lookup feature. Previously, all URLs pulled form CrowdStrike Intel would be cross referenced with Zscaler's known URLs. If the URL was already cateegorized, it would be rejected by the script. This is no longer the case. All URLs will be pushed regardless of status with Zscaler. Our next patch will involve cleaning up the codebase and removing leftover references to deprecated processes and operations.
-
-By removing the URL Lookup procedure, stability, reliability, and ease of use has been significantly improved.
-
-We've added a new logging destination. Now, indicators that were rejected by the regex filter will be logged in ./logs/rejected_log/. Also, the total rejected indicators count will be logged and displayed after a successfull run along side the number of successfully pushed indicators.
-
-example: 
-
-```
-Total run time: 0:00:49;
-Indicators pushed: 263;
-Indicators rejected: 736;
-```
-
-Added error handling for the ZIA API's 412 response code.
-
-
-# Support & Community Forums
-
-:fire: Is something going wrong? :fire:<br/>
-GitHub Issues are used to report bugs. Submit a ticket here:<br/>
-[https://github.com/CrowdStrike/zscaler-FalconX-integration/issues/new/choose](https://github.com/CrowdStrike/zscaler-FalconX-integration/issues/new/choose)
-
-**Be sure to include details from the most recent files in the ./log directory**
