@@ -18,15 +18,18 @@ In the Falcon UI, navigate to API Clients and Keys. Then, click Add a New API Cl
 
 ## Download Repository
 ```bash
-git clone https://github.com/CrowdStrike/zscaler-FalconX-integration.git
-cd zscaler-FalconX-integration
+git clone https://github.com/diazed787/ZStrike.git
+cd ZStrike
 ```
 
 ## Install Dependencies with pip3
 ```bash
 pip3 install -r requirements.txt
 ```
-
+## Rename Sample INI File
+```bash
+mv config.ini.example config.ini
+```
 ## Configure
 Input your configurations in config.ini. Do not use quotes or ticks for any of these values.
 
@@ -35,20 +38,27 @@ Most of the fields are self-explanatory, but be sure to put some thought into th
 
 ```ini
 [CROWDSTRIKE]
-client=Your Falcon API Client ID
-secret=Your Falcon API Client Secret
-type=Type of indicators to push (ex: url, domain Default url)
-base_url=Your Falcon API Base URL (ex: https://api.crowdstrike.com)
-limit=Number of indicators to maintain (Max: 275,000 Default 10,000)
+client=
+secret=
+base_url=https://api.us-2.crowdstrike.com
+type=url
+limit=10000
+
+# ZScaler configurations
 [ZSCALER]
-hostname=Your zscaler Hostname (Hostname only requires the base URL (i.e. https://zsapi.zscalerthree.net))
-username=Your ZIA Username
-password=Your ZIA Passsword
-token=Your ZIA API token
+auth_hostname=https://<vanity_url>.zslogin.net
+client_id=
+client_secret=
+hostname=https://api.zsapi.net/zia/api/v1
+
+#If running as a chron job, set this value to 1
+#When disable_loop=1, the script will exit after completing a cycle
 [CHRON]
-disable_loop=Change this value to 1 if you are running the Intel Bridge via Chron job. This will force the program to quit after running. (Default 0, looping enabled)
+disable_loop=0
+
+#When log_indicators=1, indicators will be logged in logs/data_log as they are deleted and loaded.
 [LOG]
-log_indicators=Change this value to 1 for indicators to be logged in logs/data_log as they are deleted and loaded.
+log_indicators=0
 ```
 # Running the Integration
 With Python 3.7+ installed:
@@ -58,7 +68,7 @@ python3 intelbridge
 
 # Patch Notes
 
-Due to popular demand, we've removed the URL Lookup feature. Previously, all URLs pulled form CrowdStrike Intel would be corss referenced with Zscaler's known URLs. If the URL was already cateegorized, it would be rejected by the script. This is no longer the case. All URLs will be pushed regardless of status with Zscaler. Our next patch will involve cleaning up the codebase and removing leftover references to deprecated processes and operations.
+Due to popular demand, we've removed the URL Lookup feature. Previously, all URLs pulled form CrowdStrike Intel would be cross referenced with Zscaler's known URLs. If the URL was already cateegorized, it would be rejected by the script. This is no longer the case. All URLs will be pushed regardless of status with Zscaler. Our next patch will involve cleaning up the codebase and removing leftover references to deprecated processes and operations.
 
 By removing the URL Lookup procedure, stability, reliability, and ease of use has been significantly improved.
 
